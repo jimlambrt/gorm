@@ -2,6 +2,7 @@ package gorm_test
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
@@ -62,9 +63,19 @@ func TestValuer(t *testing.T) {
 	}
 
 	var user2 User
-	if err := DB.Where("name = ? AND password = ? AND password_hash = ?", name, EncryptedData("pass1"), []byte("abc")).First(&user2).Error; err != nil {
-		t.Errorf("No error should happen when querying user with valuer, but got %v", err)
+
+	if isOra(DB) {
+		where := fmt.Sprintf("name = ? AND %s AND %s", gorm.OraSearchBlob("password_hash"), gorm.OraSearchBlob("password"))
+
+		if err := DB.Where(where, name, "abc", "***pass1").First(&user2).Error; err != nil {
+			t.Errorf("No error should happen when querying user with valuer, but got %v", err)
+		}
+	} else {
+		if err := DB.Where("name = ? AND password = ? AND password_hash = ?", name, EncryptedData("pass1"), []byte("abc")).First(&user2).Error; err != nil {
+			t.Errorf("No error should happen when querying user with valuer, but got %v", err)
+		}
 	}
+
 }
 
 func TestFailedValuer(t *testing.T) {

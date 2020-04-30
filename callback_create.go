@@ -144,6 +144,11 @@ func createCallback(scope *Scope) {
 			return
 		}
 
+		if ora, ok := scope.Dialect().(OraDialect); ok {
+			ora.CreateWithReturningInto(scope)
+			return
+		}
+
 		// execute create sql: lastInsertID implemention for majority of dialects
 		if lastInsertIDReturningSuffix == "" && lastInsertIDOutputInterstitial == "" {
 			if result, err := scope.SQLDB().Exec(scope.SQL, scope.SQLVars...); scope.Err(err) == nil {
